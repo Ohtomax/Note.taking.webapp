@@ -18,13 +18,24 @@
     </style>
 </head>
 <body class="flex items-center justify-center py-[50px] bg-[url(https://wallpapers.com/images/hd/4k-moving-horizon-desktop-1jdq8ow0m2r2h8t2.jpg)] bg-cover ">
-    <section class="bg-black/60 w-[50%] p-10 rounded-3xl flex flex-col items-center gap-12 shadow-2xl justify-center">
+    <section class="relevant bg-black/60 w-[50%] p-10 rounded-3xl flex flex-col items-center gap-12 shadow-2xl justify-center">
         <h1 id="typing" class="[text-stroke:2px_white] text-[20px] text-white font-bold text-center" style="font-family: 'Press Start 2P', cursive;"></h1>
 
         <div class="flex flex-col items-center gap-5">
             <h2 class="bg-white text-black font-bold border-4 border-yellow-500 rounded-xl px-8 py-3 text-[14px]" style="font-family: 'Press Start 2P', cursive;">SCORE</h2>
-            <div class="flex gap-8 text-white text-[18px] font-bold" style="font-family: 'Press Start 2P', cursive;">
-                <span id="userscore">0</span> : <span id="computerscore">0</span>
+            <h2 class="text-[14px] text-white" style="font-family: 'Press Start 2P', cursive;">
+                Wins:<span id="updatewins">0</span>
+                Losses:<span id="updatelosses">0</span>
+                Ties:<span id="updateties">0</span>
+            </h2>
+            <div class="flex gap-8 text-white text-[18px] font-bold " style="font-family: 'Press Start 2P', cursive;">
+                <div class="flex flex-row w-[100%] justify-center items-center">
+                    <h1 class="flex flex-row w-[40%] justify-end">Username<span class="pl-[10px]" id="userscore">0</span></h1>
+
+                    <h1 class="flex w-[10%] text-center items-center justify-center">:</h1>
+
+                    <h1 class="flex flex-row w-[40%] justify-start"><span class="pr-[10px]" id="computerscore">0</span> Computer</h1>
+                </div>
             </div>
         </div>
 
@@ -37,6 +48,9 @@
             <button onclick="play(2)" class="px-8 py-4 bg-green-600 text-white font-bold rounded-lg hover:bg-green-700 active:translate-y-1 transition-transform" style="font-family: 'Press Start 2P', cursive;">Paper</button>
             <button onclick="play(3)" class="px-8 py-4 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 active:translate-y-1 transition-transform" style="font-family: 'Press Start 2P', cursive;">Scissors</button>
         </div>
+        <div>
+            <button onclick="reset()" class="px-8 py-4 bg-violet-600 text-white font-bold rounded-lg hover:bg-blue-700 active:translate-y-1 transition-transform" style="font-family: 'Press Start 2P', cursive;">Reset button</button>
+        </div>
 
     </section>
 
@@ -45,6 +59,17 @@
         let computerchoice; 
         let computerscore = 0;
         let userscore = 0;
+
+        const score = {
+            wins: 0, 
+            losses: 0,
+            ties: 0
+        }
+        
+        const jsonstringdata = JSON.stringify(score);
+        JSON.parse(localStorage.getItem(sco))
+
+        localStorage.setItem('score', JSON.stringify(score))
 
         function choiceconversionnumber(choice){
             if (choice === 1){
@@ -57,11 +82,29 @@
                 return "Scissors"
             }
         }
+
+        function reset(){
+
+            score.wins = 0;
+            score.losses = 0;
+            score.ties = 0;
+            userscore = 0;
+            computerscore = 0; 
+
+
+            document.getElementById("updatewins").textContent = score.wins;
+            document.getElementById("updatelosses").textContent = score.losses;
+            document.getElementById("updateties").textContent = score.ties;
+            document.getElementById("userscore").textContent = userscore;
+            document.getElementById("computerscore").textContent = computerscore;
+        }
         
-         function play(userchoice){
+        function play(userchoice){
             computerchoice = Math.floor(Math.random() * 3) + 1;
 
             if(userchoice === computerchoice){
+                score.ties++;
+                document.getElementById("updateties").textContent = score.ties;
                 document.getElementById("decision").textContent = (`This is a draw,  Userchoice: ${choiceconversionnumber(userchoice)} & Computer Choice: ${choiceconversionnumber(computerchoice)}`);
             }
 
@@ -69,15 +112,22 @@
                 (userchoice === 1 && computerchoice === 2) || (userchoice === 2 && computerchoice === 3) || (userchoice === 3 && computerchoice === 1)
             ){
                 computerscore ++;
+                score.losses ++;
                 document.getElementById("computerscore").textContent = computerscore;
+                document.getElementById("updatelosses").textContent = score.losses;
                 document.getElementById("decision").textContent = (`The winner is the computer,  Userchoice: ${choiceconversionnumber(userchoice)} & Computer Choice: ${choiceconversionnumber(computerchoice)}`);
             }
             else {
                 userscore ++;
+                score.wins ++;
                 document.getElementById("userscore").textContent = userscore;
+                document.getElementById("updatewins").textContent = score.wins;
                 document.getElementById("decision").textContent = (`The winner is the User,  Userchoice: ${choiceconversionnumber(userchoice)} & Computer Choice: ${choiceconversionnumber(computerchoice)}`);
             }
         }
+
+
+        JSON.stringify(score)
 
     </script>
 
