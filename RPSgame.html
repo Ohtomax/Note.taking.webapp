@@ -57,19 +57,40 @@
     <script>
         let userchoice; 
         let computerchoice; 
-        let computerscore = 0;
-        let userscore = 0;
 
-        const score = {
-            wins: 0, 
-            losses: 0,
-            ties: 0
-        }
+
+        let score = JSON.parse(localStorage.getItem('localscore')) || {
+                wins: 0,
+                losses: 0,
+                ties: 0
+        };
         
-        const jsonstringdata = JSON.stringify(score);
-        JSON.parse(localStorage.getItem(sco))
+        let computerscore = score.losses;
+        let userscore = score.wins;
+        
+        document.getElementById("userscore").textContent = userscore;
+        document.getElementById("computerscore").textContent = computerscore;
+        document.getElementById("updatewins").textContent = score.wins;
+        document.getElementById("updatelosses").textContent = score.losses;
+        document.getElementById("updateties").textContent = score.ties;
+        
+        /* 
+        So try ko explain 
 
-        localStorage.setItem('score', JSON.stringify(score))
+        1. So we have a constant variable na score - dito natin pinapasok yung mga wins and losses
+
+        2. We will be using JSON, so yung JSON is just an another method where we convert data to string in JSON of my object
+        code --- const (variable name) = JSON.stringify(score);
+
+        3. We will saved the convered string into local storage using localStorage.setItem - then variable name for the local variable of the localstorage and the converted object to string
+        code -- localStorage.setItem('local variable for localstorage', the variable name where we set the converted data to string)
+
+        4. Then we will retrieve it 
+        code -- const userdata = localStorage.getItem('localscore')
+
+        5. Then convert it again to Javascript object
+
+        */
 
         function choiceconversionnumber(choice){
             if (choice === 1){
@@ -97,6 +118,8 @@
             document.getElementById("updateties").textContent = score.ties;
             document.getElementById("userscore").textContent = userscore;
             document.getElementById("computerscore").textContent = computerscore;
+
+            localStorage.setItem('localscore', JSON.stringify(score));
         }
         
         function play(userchoice){
@@ -111,23 +134,25 @@
             else if(
                 (userchoice === 1 && computerchoice === 2) || (userchoice === 2 && computerchoice === 3) || (userchoice === 3 && computerchoice === 1)
             ){
-                computerscore ++;
                 score.losses ++;
+                computerscore = score.losses;
                 document.getElementById("computerscore").textContent = computerscore;
                 document.getElementById("updatelosses").textContent = score.losses;
                 document.getElementById("decision").textContent = (`The winner is the computer,  Userchoice: ${choiceconversionnumber(userchoice)} & Computer Choice: ${choiceconversionnumber(computerchoice)}`);
             }
             else {
-                userscore ++;
                 score.wins ++;
+                userscore = score.wins;
                 document.getElementById("userscore").textContent = userscore;
                 document.getElementById("updatewins").textContent = score.wins;
                 document.getElementById("decision").textContent = (`The winner is the User,  Userchoice: ${choiceconversionnumber(userchoice)} & Computer Choice: ${choiceconversionnumber(computerchoice)}`);
             }
+
+            localStorage.setItem('localscore', JSON.stringify(score));
         }
 
 
-        JSON.stringify(score)
+      
 
     </script>
 
