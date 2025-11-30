@@ -57,7 +57,8 @@ function displaynotes() {
                 <div class="flex flex-row justify-between">
                     
                     <!-- Title -->
-                    <div>
+                    <div class= "flex flex-row gap-[10px]">
+                        <input type="checkbox" onclick = "event.stopPropagation()" class="note-checkbox" value = "${note.id}">
                         <h1 class="font-bold text-[18px] overflow-x-auto grow max-w-[200px] break-words">
                             ${note.title}
                         </h1>
@@ -142,4 +143,39 @@ function status(id, value){
         statusofnote.status = value;
         localStorage.setItem('localnotes', JSON.stringify(listofnotes));
     }
+}
+
+function selectdeletion(){
+    const selectnotestobedeleted = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobedeleted = Array.from(selectnotestobedeleted).map(checkbox => checkbox.value);
+
+    listofnotes = listofnotes.filter(note => !idstobedeleted.includes(note.id));
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes()
+}
+
+function markascompleted(){
+    const selectednotestobecompleted = document.querySelectorAll(".note-checkbox:checked");
+
+    const idstobemarkasdone = Array.from(selectednotestobecompleted).map(checkbox => checkbox.value);
+
+    listofnotes.forEach(note => {
+        if(idstobemarkasdone.includes(note.id)){
+            note.status = "completed";
+        }
+    })
+}   
+
+function markaspending(){
+    const selectednotestobepending = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobemarkaspending = Array.from(selectednotestobepending).map(checkbox => checkbox.value)
+
+    listofnotes.forEach(note => {
+        if(idstobemarkaspending.includes(note.id)){
+            note.status = "pending";
+        }
+    }) 
 }
