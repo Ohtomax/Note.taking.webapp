@@ -5,6 +5,10 @@ let note = {
             status: ""
         };
 
+
+
+let listofarc = JSON.parse(localStorage.getItem('listarc')) || [];
+
 let listofnotes = JSON.parse(localStorage.getItem('localnotes')) || [];
 
 function addnewnote(){
@@ -24,7 +28,8 @@ function savefunction(){
     note = {
         id: generateID(),
         title: title,
-        content: content
+        content: content,
+        status: "pending"
     };
 
     listofnotes.unshift({...note});
@@ -36,18 +41,18 @@ function savefunction(){
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
     console.log(listofnotes);
 
-    displaynotes()
+    displaynotes(listofnotes)
 };
 
-function displaynotes() {
-    if (listofnotes.length === 0) {
+function displaynotes(typeofnotes) {
+    if (typeofnotes.length === 0) {
         document.getElementById("nonotesID").style.display = "flex";
         notecontainer.innerHTML = "";
     } 
     else {
         document.getElementById("nonotesID").style.display = "none";
 
-        document.getElementById("notecontainer").innerHTML = listofnotes.map(note => `
+        document.getElementById("notecontainer").innerHTML = typeofnotes.map(note => `
             <div 
                 onclick="editnote('${note.id}')"
                 class="note-block flex flex-col w-[280px] h-[350px] bg-white my-[20px] mx-[20px] py-[10px] px-[10px] rounded-[10px] gap-[6px] hover:shadow-lg group"
@@ -110,7 +115,7 @@ function deletenote(id){
 
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
 
-    displaynotes()
+    displaynotes(listofnotes)
 }
 
 
@@ -118,7 +123,7 @@ function editnote(id){
     const editnote = listofnotes.find(note => note.id == id);
     document.getElementById("titleNoteEdit").value = editnote.title;
     document.getElementById("contentNoteEdit").value = editnote.content;
-
+ 
     notemodaledit.dataset.id = id;
     notemodaledit.showModal();
 }
@@ -131,8 +136,9 @@ function savenewnote(){
     editnote.content = document.getElementById("contentNoteEdit").value.trim();
 
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes()
+    displaynotes(listofnotes)
     notemodaledit.close();
+
 }
 
 
@@ -153,7 +159,7 @@ function selectdeletion(){
     listofnotes = listofnotes.filter(note => !idstobedeleted.includes(note.id));
 
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes()
+    displaynotes(listofnotes)
 }
 
 function markascompleted(){
@@ -166,6 +172,9 @@ function markascompleted(){
             note.status = "completed";
         }
     })
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes);
 }   
 
 function markaspending(){
@@ -178,4 +187,36 @@ function markaspending(){
             note.status = "pending";
         }
     }) 
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes);
+}
+
+function addtoarchive(){
+    const selectednotestobeadded = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobeadded = Array.from(selectednotestobeadded).map(checkbox => checkbox.value)
+
+    listofnotes.forEach(note => {
+        if(idstobeadded.includes(note.id)){
+            listofarc.push({
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                status: note.status
+            });
+            localStorage.setItem('listarc', JSON.stringify(listofarc))
+        }
+    })
+
+        listofnotes = listofnotes.filter(note => !idstobeadded.includes(note.id));
+        localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+
+        displaynotes(listofnotes)
+}
+
+function deleteall(){
+    typeofnotes = [];
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes()
 }
