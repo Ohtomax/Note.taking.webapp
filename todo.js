@@ -5,7 +5,7 @@ let note = {
             status: ""
         };
 
-
+let listofdeleted = JSON.parse(localStorage.getItem('listdeleted')) || [];
 
 let listofarc = JSON.parse(localStorage.getItem('listarc')) || [];
 
@@ -111,6 +111,14 @@ function displaynotes(typeofnotes) {
 
 
 function deletenote(id){
+
+    const deletednote = listofnotes.find(note => note.id == id)
+
+    if (deletednote) {
+        recentlydeleted(deletednote);
+        console.log(listofdeleted)
+    }
+
     listofnotes = listofnotes.filter(note => note.id != id);
 
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
@@ -155,6 +163,14 @@ function selectdeletion(){
     const selectnotestobedeleted = document.querySelectorAll(".note-checkbox:checked")
 
     const idstobedeleted = Array.from(selectnotestobedeleted).map(checkbox => checkbox.value);
+
+    const notestotrash = listofnotes.filter(note => idstobedeleted.includes(note.id))
+
+    notestotrash.forEach(
+        note => {
+            recentlydeleted(note)
+        }
+    )
 
     listofnotes = listofnotes.filter(note => !idstobedeleted.includes(note.id));
 
@@ -216,7 +232,7 @@ function addtoarchive(){
 }
 
 function addtomain(){
-    const selectednotestobeaddtomain = document.querySelectorAll(".note-checkbox-arc:checked")
+    const selectednotestobeaddtomain = document.querySelectorAll(".note-checkbox:checked")
 
     const idstobeaddedtomain = Array.from(selectednotestobeaddtomain).map(checkboxarc => checkboxarc.value)
 
@@ -241,12 +257,54 @@ function addtomain(){
 
 function deleteallformain(){
     listofnotes = []
-    localStorage.setItem('listofnotes', JSON.stringify(listofnotes))
-    displaynotes()
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes))
+    displaynotes(listofnotes)
 }
 
 function deleteallforarc(){
-    listofnotes = []
-    localStorage.setItem('listofnotes', JSON.stringify(listofnotes))
-    displaynotes()
+    listofarc = []
+    localStorage.setItem('listarc', JSON.stringify(listofarc))
+    displaynotes(listofarc)
 }
+
+
+function recentlydeleted(note){
+    listofdeleted.push({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            status: note.status
+    })
+
+    localStorage.setItem('listdeleted', JSON.stringify(listofdeleted))
+} 
+
+function addBackToMain(note){
+    listofnotes.push({
+            id: note.id,
+            title: note.title,
+            content: note.content,
+            status: note.status
+    });
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+}
+
+function restoredeleted(){
+    const selectnotestoberestored = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstoberestored = Array.from(selectnotestoberestored).map(checkbox => checkbox.value);
+
+    const notestomain = listofdeleted.filter(note => idstoberestored.includes(note.id))
+
+    notestomain.forEach(
+        note => {
+           addBackToMain(note);
+        }
+    )
+
+    listofdeleted = listofdeleted.filter(note => !idstoberestored.includes(note.id));
+
+    localStorage.setItem('listdeleted', JSON.stringify(listofdeleted));
+    displaynotes(listofdeleted)
+}   
