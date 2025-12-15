@@ -1,310 +1,303 @@
-let note = {
-            id: "",
-            title: "",
-            content: "",
-            status: ""
+/**
+ * Industry Standard Note App
+ * Uses a Class-based architecture for better state management.
+ */
+class NoteApp {
+    constructor() {
+        // State
+        this.notes = JSON.parse(localStorage.getItem('notes')) || [];
+        this.archive = JSON.parse(localStorage.getItem('archive')) || [];
+        this.trash = JSON.parse(localStorage.getItem('trash')) || [];
+        
+        this.currentView = 'active'; // 'active', 'archive', 'trash'
+        this.currentEditId = null;
+        this.selectedIds = new Set();
+        this.searchQuery = "";
+
+        // DOM Elements
+        this.container = document.getElementById('notes-container');
+        this.emptyState = document.getElementById('empty-state');
+        this.modal = document.getElementById('note-modal');
+        this.bulkActions = document.getElementById('bulk-actions');
+        
+        // Initial Render
+        this.render();
+    }
+
+    // --- Core Data Operations ---
+
+    saveToStorage() {
+        localStorage.setItem('notes', JSON.stringify(this.notes));
+        localStorage.setItem('archive', JSON.stringify(this.archive));
+        localStorage.setItem('trash', JSON.stringify(this.trash));
+    }
+
+    get visibleNotes() {
+        let source = [];
+        if (this.currentView === 'active') source = this.notes;
+        else if (this.currentView === 'archive') source = this.archive;
+        else if (this.currentView === 'trash') source = this.trash;
+
+        if (!this.searchQuery) return source;
+
+        const lowerQ = this.searchQuery.toLowerCase();
+        return source.filter(n => 
+            n.title.toLowerCase().includes(lowerQ) || 
+            n.content.toLowerCase().includes(lowerQ)
+        );
+    }
+
+    // --- Actions ---
+
+    addNote(title, content) {
+        const newNote = {
+            id: crypto.randomUUID(), // Industry standard ID generation
+            title: title || "Untitled",
+            content: content,
+            updatedAt: new Date().toISOString(),
+            status: 'pending' // pending, completed
         };
+        this.notes.unshift(newNote);
+        this.saveToStorage();
+        this.render();
+    }
 
-let listofdeleted = JSON.parse(localStorage.getItem('listdeleted')) || [];
+    updateNote(id, title, content) {
+        // Find in current view
+        const list = this.getCurrentList();
+        const note = list.find(n => n.id === id);
+        if (note) {
+            note.title = title;
+            note.content = content;
+            note.updatedAt = new Date().toISOString();
+            this.saveToStorage();
+            this.render();
+        }
+    }
 
-let listofarc = JSON.parse(localStorage.getItem('listarc')) || [];
+    // Moving items between arrays (Active <-> Archive <-> Trash)
+    moveNote(id, fromList, toList) {
+        const index = fromList.findIndex(n => n.id === id);
+        if (index > -1) {
+            const [note] = fromList.splice(index, 1);
+            // If moving to trash, keeping original timestamp might be useful, 
+            // but usually we just push.
+            toList.unshift(note); 
+            this.saveToStorage();
+            this.render();
+        }
+    }
 
-let listofnotes = JSON.parse(localStorage.getItem('localnotes')) || [];
+    deletePermanently(id) {
+        this.trash = this.trash.filter(n => n.id !== id);
+        this.saveToStorage();
+        this.render();
+    }
 
-function addnewnote(){
-    document.getElementById("titleNote").value = "";
-    document.getElementById("contentNote").value = "";
-    notemodal.showModal();
-};
+    // --- Bulk Actions & UI Interaction ---
 
-function generateID(){
-    return Date.now().toString()
-} 
+    handleSearch(query) {
+        this.searchQuery = query.trim();
+        this.render();
+    }
 
-function savefunction(){
-    const title = document.getElementById("titleNote").value.trim();
-    const content = document.getElementById("contentNote").value.trim();
+    switchView(viewName) {
+        this.currentView = viewName;
+        this.selectedIds.clear();
+        this.renderUIState(); // Updates sidebar active state
+        this.render();
+    }
 
-    note = {
-        id: generateID(),
-        title: title,
-        content: content,
-        status: "pending"
-    };
+    toggleSelect(id) {
+        if (this.selectedIds.has(id)) {
+            this.selectedIds.delete(id);
+        } else {
+            this.selectedIds.add(id);
+        }
+        this.renderBulkActions();
+        this.render(); // Re-render to show checkbox state
+    }
 
-    listofnotes.unshift({...note});
+    // --- Modal Logic ---
 
-    document.getElementById("notemodal").close();
+    openModal(noteId = null) {
+        this.currentEditId = noteId;
+        const titleInput = document.getElementById('note-title');
+        const contentInput = document.getElementById('note-content');
+        const modalTitle = document.getElementById('modal-title');
 
-    nonotesID.style.display = "none";
+        if (noteId) {
+            const list = this.getCurrentList();
+            const note = list.find(n => n.id === noteId);
+            titleInput.value = note.title;
+            contentInput.value = note.content;
+            modalTitle.innerText = "Edit Note";
+        } else {
+            titleInput.value = "";
+            contentInput.value = "";
+            modalTitle.innerText = "New Note";
+        }
+        this.modal.showModal();
+    }
 
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    console.log(listofnotes);
+    closeModal() {
+        this.modal.close();
+        this.currentEditId = null;
+    }
 
-    displaynotes(listofnotes)
-};
+    saveNote() {
+        const title = document.getElementById('note-title').value.trim();
+        const content = document.getElementById('note-content').value.trim();
 
-function displaynotes(typeofnotes) {
-    if (typeofnotes.length === 0) {
-        document.getElementById("nonotesID").style.display = "flex";
-        notecontainer.innerHTML = "";
-    } 
-    else {
-        document.getElementById("nonotesID").style.display = "none";
+        if (!title && !content) {
+            this.closeModal();
+            return;
+        }
 
-        document.getElementById("notecontainer").innerHTML = typeofnotes.map(note => `
-            <div 
-                onclick="editnote('${note.id}')"
-                class="note-block flex flex-col w-[280px] h-[350px] bg-white my-[20px] mx-[20px] py-[10px] px-[10px] rounded-[10px] gap-[6px] hover:shadow-lg group"
-            >
+        if (this.currentEditId) {
+            this.updateNote(this.currentEditId, title, content);
+        } else {
+            this.addNote(title, content);
+        }
+        this.closeModal();
+    }
 
-                <!-- Top row -->
-                <div class="flex flex-row justify-between">
+    // --- Bulk Operations ---
+
+    bulkAction(action) {
+        const ids = Array.from(this.selectedIds);
+        
+        ids.forEach(id => {
+            if (action === 'trash') {
+                if (this.currentView === 'active') this.moveNote(id, this.notes, this.trash);
+                else if (this.currentView === 'archive') this.moveNote(id, this.archive, this.trash);
+                else if (this.currentView === 'trash') this.deletePermanently(id);
+            } 
+            else if (action === 'archive') {
+                if (this.currentView === 'active') this.moveNote(id, this.notes, this.archive);
+                else if (this.currentView === 'trash') this.moveNote(id, this.trash, this.archive); // Restore to archive
+            }
+            else if (action === 'restore') {
+                // Restore logic mostly for trash/archive back to active
+                if (this.currentView === 'trash') this.moveNote(id, this.trash, this.notes);
+                if (this.currentView === 'archive') this.moveNote(id, this.archive, this.notes);
+            }
+        });
+
+        this.selectedIds.clear();
+        this.renderBulkActions();
+    }
+
+    // --- Rendering ---
+
+    getCurrentList() {
+        if (this.currentView === 'active') return this.notes;
+        if (this.currentView === 'archive') return this.archive;
+        return this.trash;
+    }
+
+    renderUIState() {
+        // Highlight active nav item
+        document.querySelectorAll('.nav-item').forEach(el => {
+            el.className = el.className.replace('text-blue-600 bg-blue-50', 'text-gray-600 hover:bg-gray-100');
+        });
+        const activeNav = document.getElementById(`nav-${this.currentView}`);
+        if(activeNav) {
+            activeNav.className = activeNav.className.replace('text-gray-600 hover:bg-gray-100', 'text-blue-600 bg-blue-50');
+        }
+
+        // Show/Hide Restore button in bulk actions based on view
+        const restoreBtn = document.getElementById('bulk-restore-btn');
+        if (this.currentView === 'trash' || this.currentView === 'archive') {
+            restoreBtn.classList.remove('hidden');
+        } else {
+            restoreBtn.classList.add('hidden');
+        }
+    }
+
+    renderBulkActions() {
+        if (this.selectedIds.size > 0) {
+            this.bulkActions.style.display = 'flex';
+            document.getElementById('selected-count').innerText = this.selectedIds.size;
+        } else {
+            this.bulkActions.style.display = 'none';
+        }
+    }
+
+    // Secure HTML Rendering (Prevents XSS)
+    escapeHtml(str) {
+        if(!str) return "";
+        return str.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+    }
+
+    render() {
+        const data = this.visibleNotes;
+        this.container.innerHTML = "";
+
+        if (data.length === 0) {
+            this.emptyState.style.display = 'flex';
+        } else {
+            this.emptyState.style.display = 'none';
+            
+            data.forEach(note => {
+                const isSelected = this.selectedIds.has(note.id);
+                
+                // Create Card Element
+                const card = document.createElement('div');
+                card.className = `note-card group relative bg-white border border-gray-200 rounded-xl p-5 shadow-sm hover:shadow-md transition-all cursor-pointer ${isSelected ? 'ring-2 ring-blue-500 bg-blue-50' : ''}`;
+                
+                // Click to Edit (unless clicking checkbox/actions)
+                card.onclick = (e) => {
+                    // Prevent edit if clicking checkbox or action buttons
+                    if (e.target.closest('button') || e.target.closest('input')) return;
+                    // Prevent edit if in Trash
+                    if (this.currentView !== 'trash') this.openModal(note.id);
+                };
+
+                // Truncate content for preview
+                const previewContent = note.content.length > 150 ? note.content.substring(0, 150) + "..." : note.content;
+
+                card.innerHTML = `
+                    <div class="flex justify-between items-start mb-2">
+                        <h3 class="font-bold text-gray-800 text-lg break-words w-full pr-8">${this.escapeHtml(note.title)}</h3>
+                        
+                        <div class="absolute top-5 right-5 ${isSelected ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'} transition-opacity">
+                             <input type="checkbox" 
+                                class="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500 cursor-pointer"
+                                ${isSelected ? 'checked' : ''}
+                                onchange="app.toggleSelect('${note.id}')"
+                             >
+                        </div>
+                    </div>
+                    <p class="text-gray-600 text-sm whitespace-pre-wrap leading-relaxed break-words">${this.escapeHtml(previewContent)}</p>
                     
-                    <!-- Title -->
-                    <div class= "flex flex-row gap-[10px]">
-                        <input type="checkbox" onclick = "event.stopPropagation()" class="note-checkbox" value = "${note.id}">
-                        <h1 class="font-bold text-[18px] overflow-x-auto grow max-w-[200px] break-words">
-                            ${note.title}
-                        </h1>
+                    <div class="mt-4 flex items-center justify-between">
+                        <span class="text-xs text-gray-400 font-medium">${new Date(note.updatedAt).toLocaleDateString()}</span>
+                        
+                        <div class="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                            ${this.currentView !== 'trash' ? `
+                                <button onclick="app.moveNote('${note.id}', app.getCurrentList(), app.archive)" class="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-gray-100 rounded" title="Archive">
+                                    <i class="ph ph-archive"></i>
+                                </button>
+                                <button onclick="app.moveNote('${note.id}', app.getCurrentList(), app.trash)" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded" title="Delete">
+                                    <i class="ph ph-trash"></i>
+                                </button>
+                            ` : `
+                                <button onclick="app.moveNote('${note.id}', app.trash, app.notes)" class="p-1.5 text-gray-400 hover:text-green-600 hover:bg-gray-100 rounded" title="Restore">
+                                    <i class="ph ph-arrow-u-up-left"></i>
+                                </button>
+                                <button onclick="app.deletePermanently('${note.id}')" class="p-1.5 text-gray-400 hover:text-red-600 hover:bg-gray-100 rounded" title="Delete Forever">
+                                    <i class="ph ph-x-circle"></i>
+                                </button>
+                            `}
+                        </div>
                     </div>
-
-                    <!-- Icons -->
-                    <div class="flex flex-row justify-end items-center gap-[6px]">
-                        <svg 
-                            onclick="event.stopPropagation(); editnote('${note.id}')"
-                            class="lg:hidden border-none rounded bg-gray-200 p-[4px] w-[20px] h-[20px] group-hover:block"
-                            xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#191b23"
-                        >
-                            <path d="M184-184v-83.77l497.23-498.77q5.15-5.48 11.07-7.47 5.93-1.99 11.99-1.99 6.06 0 11.62 1.54 5.55 1.54 11.94 7.15l38.69 37.93q5.61 6.38 7.54 12 1.92 5.63 1.92 12.25 0 6.13-2.24 12.06-2.24 5.92-7.22 11.07L267.77-184H184Zm505.15-466.46L744-704.54 704.54-744l-54.08 54.85 38.69 38.69Z"/>
-                        </svg>
-
-                        <svg 
-                            onclick="event.stopPropagation(); deletenote('${note.id}')"
-                            class="lg:hidden border-none rounded bg-gray-200 p-[4px] w-[20px] h-[20px] group-hover:block"
-                            xmlns="http://www.w3.org/2000/svg" viewBox="0 -960 960 960" fill="#191b23"
-                        >
-                            <path d="M291-267.69 267.69-291l189-189-189-189L291-692.31l189 189 189-189L692.31-669l-189 189 189 189L669-267.69l-189-189-189 189Z"/>
-                        </svg>
-                    </div>
-                </div>
-
-                <!-- Content -->
-                <h1 class="grow overflow-y-auto max-h-[250px] break-words">
-                    ${note.content}
-                </h1>
-
-                <!-- Status Section -->
-                <div class = "flex flex-row items-center text-center h-[40px] gap-[7px]">
-                    <h1 class="font-semibold ">Status: </h1>
-                    <select id="status-${note.id}" onclick= "event.stopPropagation();" onchange = "status('${note.id}', this.value)" class = "text-center border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 py-[2px] px-[4px]">
-                        <option value="pending" ${note.status === "pending" ? "selected" : ""}>Pending</option>
-                        <option value="completed" ${note.status === "completed" ? "selected" : ""}>Completed</option>
-                    </select>
-                </div>
-            </div>
-        `).join("");
-
-        document.querySelectorAll(".note-block");
-    }
-}
-
-
-function deletenote(id){
-
-    const deletednote = listofnotes.find(note => note.id == id)
-
-    if (deletednote) {
-        recentlydeleted(deletednote);
-        console.log(listofdeleted)
-    }
-
-    listofnotes = listofnotes.filter(note => note.id != id);
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-
-    displaynotes(listofnotes)
-}
-
-
-function editnote(id){
-    const editnote = listofnotes.find(note => note.id == id);
-    document.getElementById("titleNoteEdit").value = editnote.title;
-    document.getElementById("contentNoteEdit").value = editnote.content;
- 
-    notemodaledit.dataset.id = id;
-    notemodaledit.showModal();
-}
-
-function savenewnote(){
-    const id = notemodaledit.dataset.id;
-    const editnote = listofnotes.find(note => note.id == id);
-
-    editnote.title = document.getElementById("titleNoteEdit").value.trim();
-    editnote.content = document.getElementById("contentNoteEdit").value.trim();
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes(listofnotes)
-    notemodaledit.close();
-
-}
-
-
-function status(id, value){
-    const statusofnote = listofnotes.find(note => note.id == id);
-    
-    if(statusofnote){
-        statusofnote.status = value;
-        localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    }
-}
-
-function selectdeletion(){
-    const selectnotestobedeleted = document.querySelectorAll(".note-checkbox:checked")
-
-    const idstobedeleted = Array.from(selectnotestobedeleted).map(checkbox => checkbox.value);
-
-    const notestotrash = listofnotes.filter(note => idstobedeleted.includes(note.id))
-
-    notestotrash.forEach(
-        note => {
-            recentlydeleted(note)
-        }
-    )
-
-    listofnotes = listofnotes.filter(note => !idstobedeleted.includes(note.id));
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes(listofnotes)
-}
-
-function markascompleted(){
-    const selectednotestobecompleted = document.querySelectorAll(".note-checkbox:checked");
-
-    const idstobemarkasdone = Array.from(selectednotestobecompleted).map(checkbox => checkbox.value);
-
-    listofnotes.forEach(note => {
-        if(idstobemarkasdone.includes(note.id)){
-            note.status = "completed";
-        }
-    })
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes(listofnotes);
-}   
-
-function markaspending(){
-    const selectednotestobepending = document.querySelectorAll(".note-checkbox:checked")
-
-    const idstobemarkaspending = Array.from(selectednotestobepending).map(checkbox => checkbox.value)
-
-    listofnotes.forEach(note => {
-        if(idstobemarkaspending.includes(note.id)){
-            note.status = "pending";
-        }
-    }) 
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-    displaynotes(listofnotes);
-}
-
-function addtoarchive(){
-    const selectednotestobeadded = document.querySelectorAll(".note-checkbox:checked")
-
-    const idstobeadded = Array.from(selectednotestobeadded).map(checkbox => checkbox.value)
-
-    listofnotes.forEach(note => {
-        if(idstobeadded.includes(note.id)){
-            listofarc.push({
-                id: note.id,
-                title: note.title,
-                content: note.content,
-                status: note.status
+                `;
+                this.container.appendChild(card);
             });
-            localStorage.setItem('listarc', JSON.stringify(listofarc))
         }
-    })
-
-        listofnotes = listofnotes.filter(note => !idstobeadded.includes(note.id));
-        localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-
-        displaynotes(listofnotes)
+    }
 }
 
-function addtomain(){
-    const selectednotestobeaddtomain = document.querySelectorAll(".note-checkbox:checked")
-
-    const idstobeaddedtomain = Array.from(selectednotestobeaddtomain).map(checkboxarc => checkboxarc.value)
-
-    listofarc.forEach(note => {
-        if(idstobeaddedtomain.includes(note.id)){
-            listofnotes.push({
-                id: note.id,
-                title: note.title,
-                content: note.content,
-                status: note.status
-            });
-            localStorage.setItem('localnotes', JSON.stringify(listofnotes))
-        }
-    })
-
-        listofarc = listofarc.filter(note => !idstobeaddedtomain.includes(note.id));
-
-        localStorage.setItem('listarc', JSON.stringify(listofarc));
-
-        displaynotes(listofarc)
-}
-
-function deleteallformain(){
-    listofnotes = []
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes))
-    displaynotes(listofnotes)
-}
-
-function deleteallforarc(){
-    listofarc = []
-    localStorage.setItem('listarc', JSON.stringify(listofarc))
-    displaynotes(listofarc)
-}
-
-
-function recentlydeleted(note){
-    listofdeleted.push({
-            id: note.id,
-            title: note.title,
-            content: note.content,
-            status: note.status
-    })
-
-    localStorage.setItem('listdeleted', JSON.stringify(listofdeleted))
-} 
-
-function addBackToMain(note){
-    listofnotes.push({
-            id: note.id,
-            title: note.title,
-            content: note.content,
-            status: note.status
-    });
-
-    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
-}
-
-function restoredeleted(){
-    const selectnotestoberestored = document.querySelectorAll(".note-checkbox:checked")
-
-    const idstoberestored = Array.from(selectnotestoberestored).map(checkbox => checkbox.value);
-
-    const notestomain = listofdeleted.filter(note => idstoberestored.includes(note.id))
-
-    notestomain.forEach(
-        note => {
-           addBackToMain(note);
-        }
-    )
-
-    listofdeleted = listofdeleted.filter(note => !idstoberestored.includes(note.id));
-
-    localStorage.setItem('listdeleted', JSON.stringify(listofdeleted));
-    displaynotes(listofdeleted)
-}   
+// Initialize App
+const app = new NoteApp();
