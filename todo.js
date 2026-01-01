@@ -299,5 +299,119 @@ class NoteApp {
     }
 }
 
+<<<<<<< HEAD
 // Initialize App
 const app = new NoteApp();
+=======
+
+function deletenote(id){
+    listofnotes = listofnotes.filter(note => note.id != id);
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+
+    displaynotes(listofnotes)
+}
+
+
+function editnote(id){
+    const editnote = listofnotes.find(note => note.id == id);
+    document.getElementById("titleNoteEdit").value = editnote.title;
+    document.getElementById("contentNoteEdit").value = editnote.content;
+ 
+    notemodaledit.dataset.id = id;
+    notemodaledit.showModal();
+}
+
+function savenewnote(){
+    const id = notemodaledit.dataset.id;
+    const editnote = listofnotes.find(note => note.id == id);
+
+    editnote.title = document.getElementById("titleNoteEdit").value.trim();
+    editnote.content = document.getElementById("contentNoteEdit").value.trim();
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes)
+    notemodaledit.close();
+
+}
+
+
+function status(id, value){
+    const statusofnote = listofnotes.find(note => note.id == id);
+    
+    if(statusofnote){
+        statusofnote.status = value;
+        localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    }
+}
+
+function selectdeletion(){
+    const selectnotestobedeleted = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobedeleted = Array.from(selectnotestobedeleted).map(checkbox => checkbox.value);
+
+    listofnotes = listofnotes.filter(note => !idstobedeleted.includes(note.id));
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes)
+}
+
+function markascompleted(){
+    const selectednotestobecompleted = document.querySelectorAll(".note-checkbox:checked");
+
+    const idstobemarkasdone = Array.from(selectednotestobecompleted).map(checkbox => checkbox.value);
+
+    listofnotes.forEach(note => {
+        if(idstobemarkasdone.includes(note.id)){
+            note.status = "completed";
+        }
+    })
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes);
+}   
+
+function markaspending(){
+    const selectednotestobepending = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobemarkaspending = Array.from(selectednotestobepending).map(checkbox => checkbox.value)
+
+    listofnotes.forEach(note => {
+        if(idstobemarkaspending.includes(note.id)){
+            note.status = "pending";
+        }
+    }) 
+
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes(listofnotes);
+}
+
+function addtoarchive(){
+    const selectednotestobeadded = document.querySelectorAll(".note-checkbox:checked")
+
+    const idstobeadded = Array.from(selectednotestobeadded).map(checkbox => checkbox.value)
+
+    listofnotes.forEach(note => {
+        if(idstobeadded.includes(note.id)){
+            listofarc.push({
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                status: note.status
+            });
+            localStorage.setItem('listarc', JSON.stringify(listofarc))
+        }
+    })
+
+        listofnotes = listofnotes.filter(note => !idstobeadded.includes(note.id));
+        localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+
+        displaynotes(listofnotes)
+}
+
+function deleteall(){
+    typeofnotes = [];
+    localStorage.setItem('localnotes', JSON.stringify(listofnotes));
+    displaynotes()
+}
+>>>>>>> parent of 7a14af2 (push)
