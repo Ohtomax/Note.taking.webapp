@@ -3,122 +3,85 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Modern Notes App</title>
+    <title>To Do Simple Project</title>
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <style>
-        body { font-family: 'Inter', sans-serif; }
-        /* Masonry Grid Fix */
-        .masonry-grid { column-count: 1; column-gap: 1.5rem; }
-        @media (min-width: 640px) { .masonry-grid { column-count: 2; } }
-        @media (min-width: 1024px) { .masonry-grid { column-count: 3; } }
-        @media (min-width: 1280px) { .masonry-grid { column-count: 4; } }
-        
-        .note-card { break-inside: avoid; margin-bottom: 1.5rem; }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar { width: 8px; }
-        ::-webkit-scrollbar-track { background: transparent; }
-        ::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
-    </style>
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/png" href="https://images.squarespace-cdn.com/content/v1/618037d25050485b61e7f62d/271f0feb-c872-4eb6-b918-3e9c8e38443c/Rock+Paper+Scissors+Logo.png">
+    <script src="todo.js" defer></script>
 </head>
 
-<<<<<<< HEAD
-<body class="bg-gray-50 text-gray-800 h-screen flex overflow-hidden selection:bg-blue-100">
-=======
-<body onload="displaynotes()" class="bg-[#ebedf0]"> 
+<body onload="displaynotes(listofnotes)" class="bg-[#ebedf0]"> 
     <heading class="flex flex-row py-[20px] justify-start items-center gap-[5px] border-b border-gray-400 mx-[40px]">
         <img src="images/notes.svg" alt="" class="w-[30px] h-auto">
         <h1 class="font-bold text-[25px]">Note Taking Web App</h1>
     </heading>
->>>>>>> parent of 68ca6ed (gg)
 
-    <aside class="w-64 bg-white border-r border-gray-200 flex-col hidden md:flex">
-        <div class="p-6 flex items-center gap-3">
-            <div class="bg-blue-600 text-white p-2 rounded-lg">
-                <i class="ph ph-notebook text-xl"></i>
-            </div>
-            <h1 class="font-bold text-xl tracking-tight">NoteFlow</h1>
+    <section class="mt-[20px]">
+        <div class="flex px-[40px]">
+            <h1 class="font-bold">
+                Note List
+            </h1>
         </div>
+    </section>
 
-        <nav class="flex-1 px-4 space-y-1">
-            <button onclick="app.switchView('active')" id="nav-active" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-blue-600 bg-blue-50 transition-colors">
-                <i class="ph ph-lightbulb text-lg"></i> Notes
-            </button>
-            <button onclick="app.switchView('archive')" id="nav-archive" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
-                <i class="ph ph-archive text-lg"></i> Archive
-            </button>
-            <button onclick="app.switchView('trash')" id="nav-trash" class="nav-item w-full flex items-center gap-3 px-4 py-3 text-sm font-medium rounded-lg text-gray-600 hover:bg-gray-100 transition-colors">
-                <i class="ph ph-trash text-lg"></i> Trash
-            </button>
-        </nav>
-    </aside>
-
-    <main class="flex-1 flex flex-col h-full relative">
-        
-        <header class="h-16 border-b border-gray-200 bg-white flex items-center justify-between px-6 z-10">
-            <div class="md:hidden">
-                <i class="ph ph-list text-2xl"></i>
-            </div>
-
-            <div class="flex-1 max-w-2xl mx-auto relative">
-                <i class="ph ph-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-gray-400"></i>
-                <input type="text" id="search-input" placeholder="Search your notes..." 
-                    class="w-full bg-gray-100 border-none rounded-full py-2 pl-10 pr-4 focus:ring-2 focus:ring-blue-500 focus:bg-white transition-all outline-none"
-                    oninput="app.handleSearch(this.value)">
-            </div>
-            
-            <div class="ml-4 flex items-center gap-3" id="bulk-actions" style="display: none;">
-                <span class="text-sm text-gray-500 font-medium"><span id="selected-count">0</span> selected</span>
-                <button onclick="app.bulkAction('archive')" class="p-2 text-gray-600 hover:text-blue-600 hover:bg-blue-50 rounded-full transition" title="Archive Selected"><i class="ph ph-archive-box"></i></button>
-                <button onclick="app.bulkAction('trash')" class="p-2 text-gray-600 hover:text-red-600 hover:bg-red-50 rounded-full transition" title="Delete Selected"><i class="ph ph-trash"></i></button>
-                <button onclick="app.bulkAction('restore')" class="p-2 text-gray-600 hover:text-green-600 hover:bg-green-50 rounded-full transition hidden" id="bulk-restore-btn" title="Restore Selected"><i class="ph ph-arrow-u-up-left"></i></button>
-            </div>
-        </header>
-
-        <div id="scroll-container" class="flex-1 overflow-y-auto p-6">
-            <div id="empty-state" class="hidden h-full flex flex-col items-center justify-center text-center opacity-60">
-                <i class="ph ph-note-pencil text-6xl text-gray-300 mb-4"></i>
-                <h2 class="text-xl font-semibold text-gray-700">No notes here</h2>
-                <p class="text-gray-500">Your ideas will appear here.</p>
-            </div>
-
-            <div id="notes-container" class="masonry-grid">
-                </div>
+    <section id="nonotesID" class="flex flex-col items-center text-center mt-[50px] px-[20px]">
+        <div>
+            <h1 class="font-bold">No notes yet</h1>
+            <h1 class="mt-[10px]">Create your first notes to get started</h1>
+            <button class="bg-black border py-[7px] px-[12px] rounded-[10px] mt-[10px] text-white font-bold" onclick="addnewnote()">+ Add Your First Note</button>
         </div>
+    </section>
 
-        <button onclick="app.openModal()" 
-            class="absolute bottom-8 right-8 bg-blue-600 hover:bg-blue-700 text-white w-14 h-14 rounded-2xl shadow-lg hover:shadow-xl hover:scale-105 transition-all flex items-center justify-center z-20">
-            <i class="ph ph-plus text-2xl font-bold"></i>
-        </button>
-    </main>
+    <section id="notecontainer" class="flex flex-wrap justify-center">
 
-    <dialog id="note-modal" class="bg-transparent backdrop:bg-gray-900/50 open:animate-fade-in p-0 rounded-none w-full h-full md:w-auto md:h-auto md:backdrop:backdrop-blur-sm">
-        <div class="fixed inset-0 flex items-center justify-center p-4" onclick="if(event.target === this) app.closeModal()">
-            <div class="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden flex flex-col max-h-[90vh]">
-                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
-                    <h2 class="font-semibold text-lg" id="modal-title">New Note</h2>
-                    <button onclick="app.closeModal()" class="text-gray-400 hover:text-gray-800"><i class="ph ph-x text-xl"></i></button>
-                </div>
-                
-                <div class="p-6 space-y-4 overflow-y-auto">
-                    <input type="text" id="note-title" placeholder="Title" class="w-full text-2xl font-bold border-none focus:ring-0 placeholder:text-gray-300 outline-none">
-                    <textarea id="note-content" rows="8" placeholder="Start typing..." class="w-full text-gray-600 border-none focus:ring-0 resize-none placeholder:text-gray-300 outline-none text-lg leading-relaxed"></textarea>
-                </div>
+    </section>
 
-                <div class="p-4 bg-gray-50 border-t border-gray-100 flex justify-between items-center">
-                    <span class="text-xs text-gray-400" id="last-edited"></span>
-                    <div class="flex gap-2">
-                        <button onclick="app.closeModal()" class="px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-200 rounded-lg transition">Cancel</button>
-                        <button onclick="app.saveNote()" class="px-6 py-2 text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 rounded-lg shadow-sm transition">Save</button>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <footer class="flex flex-row justify-end pr-[30px]">
+        <button id="ArcBtn" class="flex fixed bg-gray-300 rounded-[10px] p-[8px] bottom-[30px] w-[100px] h-auto right-[250px] " onclick="addtoarchive()">Put to Archieve</button>
+        <button id="deleteBtn" class="flex fixed bg-gray-300 rounded-[10px] p-[8px] bottom-[30px] w-[100px] h-auto right-[120px] " onclick="selectdeletion()">Delete Selected</button>
+        <img src="images/newfile.svg" id="openmodalbtn" class="flex fixed bg-gray-300 rounded-[10px] p-[8px] bottom-[30px] w-[50px] h-auto" onclick="addnewnote()">
+    </footer>
+
+    <dialog id="notemodal" class="w-100 fixed py-[10px] px-[10px] rounded-[10px] fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg">
+        <form method="dialog" class="flex flex-col gap-[10px] px-[10px]">
+            <h1 class="font-bold text-[20px]">Create a Note</h1>
+
+            <label class="flex flex-col gap-[10px]">
+                Title
+                <input id="titleNote" placeholder="Enter your note title"  type="text" class="px-[10px] py-[10px] border border-blue-700 focus:border-blue-700  bg-blue-200 rounded-[10px]">
+            </label>
+
+            <label class="flex flex-col gap-[10px]">
+                Content
+                <textarea id="contentNote" placeholder="Enter your note content"  class="px-[10px] py-[10px] border border-blue-700 focus:border-blue-700  bg-blue-200 rounded-[10px]" id="" rows="5"></textarea>
+            </label>
+
+            <menu class="flex flex-row justify-end gap-[10px] mt-[10px]">
+                <button class="bg-[#828282] text-white  border py-[5px] px-[10px] rounded-[10px] " value="cancel">Cancel</button>
+                <button class="bg-[#000000] text-white font-bold border py-[5px] px-[13px] rounded-[10px] " id="" value="default" onclick="savefunction()">Save</button>
+            </menu>
+        </form>
     </dialog>
 
-    <script src="todo.js"></script>
+        <dialog  id="notemodaledit" class="w-100 fixed py-[10px] px-[10px] rounded-[10px] fixed left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-white shadow-lg">
+        <form method="dialog" class="flex flex-col gap-[10px] px-[10px]">
+            <h1 class="font-bold text-[20px]">Create a Note</h1>
+
+            <label class="flex flex-col gap-[10px]">
+                Title
+                <input id="titleNoteEdit" placeholder="Enter your note title"  type="text" class="px-[10px] py-[10px] border border-blue-700 focus:border-blue-700  bg-blue-200 rounded-[10px]">
+            </label>
+
+            <label class="flex flex-col gap-[10px]">
+                Content
+                <textarea id="contentNoteEdit" placeholder="Enter your note content"  class="px-[10px] py-[10px] border border-blue-700 focus:border-blue-700  bg-blue-200 rounded-[10px]" id="" rows="5"></textarea>
+            </label>
+
+            <menu class="flex flex-row justify-end gap-[10px] mt-[10px]">
+                <button class="bg-[#828282] text-white  border py-[5px] px-[10px] rounded-[10px] " value="cancel">Cancel</button>
+                <button class="bg-[#000000] text-white font-bold border py-[5px] px-[13px] rounded-[10px] " onclick="savenewnote()" value="default" >Save</button>
+            </menu>
+        </form>
+    </dialog>
 </body>
 </html>
