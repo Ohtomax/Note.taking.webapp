@@ -62,6 +62,7 @@ class NoteApp {
         this.render();
     }
 
+<<<<<<< HEAD
     updateNote(id, title, content) {
         // Find in current view
         const list = this.getCurrentList();
@@ -74,6 +75,9 @@ class NoteApp {
             this.render();
         }
     }
+=======
+
+>>>>>>> parent of 68ca6ed (gg)
 
     // Moving items between arrays (Active <-> Archive <-> Trash)
     moveNote(id, fromList, toList) {
@@ -409,9 +413,47 @@ function addtoarchive(){
         displaynotes(listofnotes)
 }
 
+<<<<<<< HEAD
 function deleteall(){
     typeofnotes = [];
     localStorage.setItem('localnotes', JSON.stringify(listofnotes));
     displaynotes()
 }
 >>>>>>> parent of 7a14af2 (push)
+=======
+function addtomain(){
+    const selectednotestobeaddtomain = document.querySelectorAll(".note-checkbox-arc:checked")
+
+    const idstobeaddedtomain = Array.from(selectednotestobeaddtomain).map(checkboxarc => checkboxarc.value)
+
+    listofarc.forEach(note => {
+        if(idstobeaddedtomain.includes(note.id)){
+            listofnotes.push({
+                id: note.id,
+                title: note.title,
+                content: note.content,
+                status: note.status
+            });
+            localStorage.setItem('localnotes', JSON.stringify(listofnotes))
+        }
+    })
+
+        listofarc = listofarc.filter(note => !idstobeaddedtomain.includes(note.id));
+
+        localStorage.setItem('listarc', JSON.stringify(listofarc));
+
+        displaynotes(listofarc)
+}
+
+function deleteallformain(){
+    listofnotes = []
+    localStorage.setItem('listofnotes', JSON.stringify(listofnotes))
+    displaynotes()
+}
+
+function deleteallforarc(){
+    listofnotes = []
+    localStorage.setItem('listofnotes', JSON.stringify(listofnotes))
+    displaynotes()
+}
+>>>>>>> parent of 68ca6ed (gg)
