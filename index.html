@@ -1,0 +1,178 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmileCheck - Test Environment</title>
+    
+    <script src="https://unpkg.com/typed.js@2.1.0/dist/typed.umd.js"></script>
+
+    <style>
+        /* Basic styling for testing */
+        body {
+            font-family: sans-serif;
+            padding: 20px;
+            max-width: 500px;
+            margin: 0 auto;
+        }
+        
+        /* The hidden class required by your JavaScript */
+        .hidden {
+            display: none;
+        }
+
+        /* Styling for the menu to make it visible */
+        .menu-container {
+            margin-bottom: 30px;
+            position: relative;
+        }
+        #dropdownMenu {
+            border: 1px solid #ccc;
+            padding: 10px;
+            background-color: #f9f9f9;
+            position: absolute;
+            top: 25px;
+            width: 150px;
+            border-radius: 4px;
+        }
+
+        /* Styling for the auth form */
+        .auth-form {
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 8px;
+            margin-top: 30px;
+        }
+        .auth-form input {
+            display: block;
+            width: 90%;
+            margin-bottom: 10px;
+            padding: 8px;
+        }
+        .auth-form button {
+            padding: 8px 15px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="menu-container">
+        <label>
+            <input type="checkbox" id="menuCheckbox"> 
+            Toggle Menu
+        </label>
+        
+        <div id="dropdownMenu" class="hidden">
+            <p>📁 Profile</p>
+            <p>⚙️ Settings</p>
+            <p>🚪 Logout</p>
+        </div>
+    </div>
+
+    <h2><span id="typing"></span></h2>
+
+    <div class="auth-form">
+        <h3>Account System</h3>
+        <input type="text" id="Username" placeholder="Enter Username">
+        <input type="password" id="Password" placeholder="Enter Password">
+        
+        <button onclick="handleSignUp()">Sign Up</button>
+        <button onclick="handleLogin()">Login</button>
+    </div>
+
+    <script>
+        // --- YOUR JAVASCRIPT ---
+
+        const menuCheckbox = document.getElementById('menuCheckbox');
+        const dropdownMenu = document.getElementById('dropdownMenu');
+
+        menuCheckbox.addEventListener('change', function() {
+            if (this.checked) {
+                // Show the menu
+                dropdownMenu.classList.remove('hidden');
+            } else {
+                // Hide the menu
+                dropdownMenu.classList.add('hidden');
+            }
+        });
+
+        // Optional: Close menu when clicking outside
+        document.addEventListener('click', (e) => {
+            if (!menuCheckbox.parentElement.contains(e.target) && !dropdownMenu.contains(e.target)) {
+                menuCheckbox.checked = false; // Reset the icon
+                dropdownMenu.classList.add('hidden'); // Hide the menu
+            }
+        });
+
+        // For the animation typing
+        var typed = new Typed('#typing', {
+            strings: ["SmileCheck", "Achieve your perfect smile"],
+            typeSpeed: 100,       
+            backSpeed: 50,        
+            backDelay: 1500,      
+            loop: true,     
+            showCursor: false       
+        });
+
+
+        let account = {
+            id: "",
+            Username: "",
+            Password: "",
+            role: ""
+        };
+
+        let listOfAccounts = JSON.parse(localStorage.getItem('listOfAccounts')) || [];
+
+        function signUpNewUSer(user, pass){
+            if(!user || !pass) {
+                alert("Please fill in both fields.");
+                return;
+            }
+
+            listOfAccounts.push({
+                id: Date.now(),
+                username: user,
+                password: pass,
+                role: "User"
+            });
+
+            localStorage.setItem('listOfAccounts', JSON.stringify(listOfAccounts));
+
+            document.getElementById("Username").value = "";
+            document.getElementById("Password").value = "";
+            
+            alert("Account created successfully!");
+        }
+
+        function CheckAccounts(user, pass){
+            let findAccount = listOfAccounts.find(placeHolder => 
+                placeHolder.username === user && placeHolder.password === pass
+            );
+
+            // CORRECTION: Removed document.body() wrapper around alert
+            if(findAccount){
+                alert("Successfully logged In!"); 
+            }
+            else{
+                alert("Failed to log In! Invalid credentials.");
+            }
+        }
+
+        // Helper functions to hook your logic to the HTML buttons easily
+        function handleSignUp() {
+            const u = document.getElementById("Username").value;
+            const p = document.getElementById("Password").value;
+            signUpNewUSer(u, p);
+        }
+
+        function handleLogin() {
+            const u = document.getElementById("Username").value;
+            const p = document.getElementById("Password").value;
+            CheckAccounts(u, p);
+        }
+    </script>
+</body>
+</html>
